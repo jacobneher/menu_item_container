@@ -1,0 +1,52 @@
+<?php
+/**
+ * @file
+ * Provides enable/disable functions for menu item containers.
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function menu_item_container_enable() {
+  $result = db_query('SELECT mlid, options FROM {menu_links} WHERE options LIKE :option', array(':option' => '%s:22:"menu_item_container_id";%'));
+  foreach ($result as $row) {
+    // Retrieve the container ID.
+    $options = unserialize($row->options);
+    $link_path = 'menu-item-container/' . $options['menu_item_container_id'];
+    unset($options['menu_item_container_id']);
+    // Update the module, link_path, router_path, and external attributes.
+    db_update('menu_links')
+      ->fields(array(
+        'module' => 'menu_item_container',
+        'link_path' => $link_path,
+        'router_path' => 'menu-item-container',
+        'external' => 0,
+        'options' => serialize($options),
+      ))
+      ->condition('mlid', $row->mlid)
+      ->execute();
+  }
+}
+
+/**
+ * Implements hook_disable().
+ */
+function menu_item_container_disable() {
+  $result = db_query('SELECT mlid, link_path, options FROM {menu_links} WHERE module = :module', array(':module' => 'menu_item_container'));
+  foreach ($result as $row) {
+    // Save the container ID.
+    $options = unserialize($row->options);
+    $options['menu_item_container_id'] = str_replace('menu-item-container/', '', $row->link_path);
+    // Update the module, link_path, router_path, and external attributes.
+    db_update('menu_links')
+      ->fields(array(
+        'module' => 'menu',
+        'link_path' => '<front>',
+        'router_path' => '',
+        'external' => 1,
+        'options' => serialize($options),
+      ))
+      ->condition('mlid', $row->mlid)
+      ->execute();
+  }
+}

@@ -1,0 +1,187 @@
+<?php
+/**
+ * @file
+ * Provides containers for menu items.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function menu_item_container_menu() {
+  module_load_include('inc', 'menu_item_container', 'menu_item_container.admin');
+  return _menu_item_container_menu();
+}
+
+/**
+ * Menu callback: redirects to the homepage.
+ */
+function menu_item_container() {
+  // If the link is mistakenly displayed and followed, redirect to the homepage.
+  drupal_goto('<front>', array(), 301);
+}
+
+/**
+ * Sets container-specific elements on the menu overview form.
+ */
+function menu_item_container_form_menu_overview_form_alter(&$form, &$form_state) {
+  module_load_include('inc', 'menu_item_container', 'menu_item_container.admin');
+  _menu_item_container_form_menu_overview_form_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
+  module_load_include('inc', 'menu_item_container', 'menu_item_container.admin');
+  _menu_item_container_form_menu_edit_item_alter($form, $form_state);
+}
+
+if (module_exists('nice_menus')) {
+  /**
+   * Implements hook_init().
+   */
+  function menu_item_container_init() {
+    drupal_add_css(drupal_get_path('module', 'menu_item_container') . '/css/menu-item-container-nice-menus.css');
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function menu_item_container_theme() {
+  return array(
+    'menu_item_container' => array(
+      'arguments' => array('item' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function menu_item_container_theme_registry_alter(&$theme_registry) {
+  // Route theme_menu_item_link().
+  $function = $theme_registry['menu_item_link']['function'];
+  $theme_registry['menu_item_link']['function'] = 'menu_item_container_route_menu_item';
+  $theme_registry['menu_item_link']['function_menu_item_container'] = $function;
+  // Route theme_breadcrumb().
+  $function = $theme_registry['breadcrumb']['function'];
+  $theme_registry['breadcrumb']['function'] = 'menu_item_container_clean_breadcrumb';
+  $theme_registry['breadcrumb']['function_menu_item_container'] = $function;
+}
+
+/**
+ * Routes menu items to link or container theme functions.
+ */
+function menu_item_container_route_menu_item($link) {
+  // If this menu item is a container, theme it.
+  list($module, $id, ) = explode('/', $link['href'] . '//', 3);
+  if ($module == 'menu-item-container') {
+    $hooks = array(
+      'menu_item_container__' . $id,
+      'menu_item_container__' . str_replace('-', '_', $link['menu_name']),
+      'menu_item_container',
+    );
+    return theme($hooks, $link);
+  }
+  // Otherwise, theme a menu item link.
+  else {
+    // Use the original theme function before we overrode it.
+    // See menu_item_container_theme_registry_alter().
+    $theme_registry =& theme_get_registry();
+    $function = $theme_registry['menu_item_link']['function_menu_item_container'];
+    return $function($link);
+  }
+}
+
+/**
+ * Cleans menu item containers in the breadcrumb.
+ */
+function menu_item_container_clean_breadcrumb($breadcrumb) {
+  // Remove the link from any containers.
+  foreach ($breadcrumb as $key => $link) {
+    list($module, $id, ) = explode('/', $link . '//', 3);
+    if ($start = strpos($link, 'menu-item-container/')) {
+      // Find the container ID to allow theme hook suggestions.
+      $start += 20;
+      $id = substr($link, $start, strpos($link, '"', $start) - $start);
+      $hooks = array(
+        'menu_item_container__' . $id,
+      //'menu_item_container__' . str_replace('-', '_', $menu_name),
+        'menu_item_container',
+      );
+      $breadcrumb[$key] = theme($hooks, array('title' => strip_tags($link)));
+    }
+  }
+  // Use the original theme function before we overrode it.
+  // See menu_item_container_theme_registry_alter().
+  $theme_registry =& theme_get_registry();
+  $function = $theme_registry['breadcrumb']['function_menu_item_container'];
+  return $function($breadcrumb);
+}
+
+/**
+ * Alter the theme's primary and secondary links.
+ *
+ * Most themes style the <a> tags in their links. We provide a wrapping link
+ * which uses only an empty anchor (#) so as to not break those themes. In
+ * actuality, a container is pretty useless in a non-hierarchal link list.
+ */
+function menu_item_container_preprocess_page(&$variables) {
+  foreach (array('primary_links', 'secondary_links') as $menu) {
+    foreach (array_keys($variables[$menu]) as $key) {
+      list($module, $id, ) = explode('/', $variables[$menu][$key]['href'] . '//', 3);
+      if ($module == 'menu-item-container') {
+        // Set the link title to be the themed container.
+        $hooks = array(
+          'menu_item_container__' . $id,
+          'menu_item_container__' . str_replace('-', '_', $menu),
+          'menu_item_container',
+        );
+        $variables[$menu][$key]['title'] = theme($hooks, array(
+          'title' => '<a href="#">' . check_plain($variables[$menu][$key]['title']) . '</a>',
+          'localized_options' => array('html' => TRUE),
+        ));
+        $variables[$menu][$key]['html'] = TRUE;
+        // Remove link path so theme_links() will wrap item with a span.
+        unset($variables[$menu][$key]['href']);
+      }
+    }
+  }
+}
+
+/**
+ * Generate the HTML output for a menu container's label.
+ *
+ * @ingroup themeable
+ */
+function theme_menu_item_container($link) {
+  $options = !empty($link['localized_options']) ? $link['localized_options'] : array();
+
+  // Copied from l() and modified.
+
+  // Merge in defaults.
+  $options += array(
+    'attributes' => array(),
+    'html' => FALSE,
+  );
+
+  // Append menu-item-container class.
+  if (isset($options['attributes']['class'])) {
+    $options['attributes']['class'] .= ' menu-item-container';
+  }
+  else {
+    $options['attributes']['class'] = 'menu-item-container';
+  }
+
+  // Make the container navigable with tabindex="0".
+  $options['attributes']['tabindex'] = '0';
+
+  // Remove all HTML and PHP tags from a tooltip. For best performance, we act only
+  // if a quick strpos() pre-check gave a suspicion (because strip_tags() is expensive).
+  if (isset($options['attributes']['title']) && strpos($options['attributes']['title'], '<') !== FALSE) {
+    $options['attributes']['title'] = strip_tags($options['attributes']['title']);
+  }
+
+  return '<span' . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $link['title'] : check_plain($link['title'])) . '</span>';
+}

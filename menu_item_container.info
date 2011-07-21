@@ -1,0 +1,16 @@
+name = "Menu item containers"
+description = "Provides menu item containers."
+
+core = 7.x
+dependencies[] = menu
+
+files[] = menu_item_container.module
+files[] = menu_item_container.admin.inc
+files[] = menu_item_container.install
+
+; Information added by drupal.org packaging script on January 1, 1970 - 00:00
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "menu_item_container"
+datestamp = "1297038565"
+

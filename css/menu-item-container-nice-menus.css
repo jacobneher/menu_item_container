@@ -1,0 +1,15 @@
+/* Add to Nice Menus styling */
+
+ul.nice-menu .menu-item-container {
+  display: block;
+  padding: 0.3em 5px 0.3em 5px;
+}
+
+ul.nice-menu-left .menu-item-container,
+ul.nice-menu-left ul .menu-item-container {
+  padding-left: 14px;
+}
+
+ul.nice-menu-down .menuparent .menu-item-container {
+  padding-right: 15px; /* LTR */
+}

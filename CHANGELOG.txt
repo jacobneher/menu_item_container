@@ -1,0 +1,20 @@
+Menu item container 7.x-1.x-dev, xxxx-xx-xx (development release)
+-------------------------------------------
+- #1037362: Port to Drupal 7 (not complete yet)
+
+Menu item container 6.x-1.2, 2011-02-06
+---------------------------------------
+- #1041994 by mikeker and JohnAlbin: Menu "add item" page shows "add container" form
+- #1040186 by mikeker: "Call-time pass-by-reference has been deprecated" warning
+
+Menu item container 6.x-1.1, 2011-01-24
+---------------------------------------
+- #1036752: Add styling for Nice Menus
+- #1037232: Convert containers to links when module disabled
+- #1037226: Delete button redirects to "custom item" delete form
+- #1015852: Make a menu item container language aware
+- #1032546: Make containers accessible with tabindex focus
+
+Menu item container 6.x-1.0, 2011-01-05
+---------------------------------------
+- Initial release

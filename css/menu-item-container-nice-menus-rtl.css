@@ -1,0 +1,6 @@
+/* Add to Nice Menus styling */
+
+ul.nice-menu-down .menuparent .menu-item-container {
+  padding-right: 5px;
+  padding-left: 15px;
+}
