@@ -61,9 +61,14 @@ function _menu_item_container_form_menu_overview_form_alter(&$form, &$form_state
         
         // Containers are always expanded.
         $form[$key]['expanded']['#disabled'] = TRUE;
-        // Set the proper operations links.
+        // Set the proper edit operations link.
         $form[$key]['operations']['edit']['#href'] = 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/edit';
-//        $form[$key]['operations']['delete']['#value'] = l('delete', 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/delete');
+        // Build our own delete link
+        $form[$key]['operations']['delete'] = array(
+          '#type' => 'link',
+          '#title' => t('delete'),
+          '#href' => 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/delete',
+        );
       }
     }
   }
