@@ -128,7 +128,7 @@ function menu_item_container_clean_breadcrumb($breadcrumb) {
  * actuality, a container is pretty useless in a non-hierarchal link list.
  */
 function menu_item_container_preprocess_page(&$variables) {
-  foreach (array('primary_links', 'secondary_links') as $menu) {
+  foreach (array('main_menu', 'secondary_menu') as $menu) {
     foreach (array_keys($variables[$menu]) as $key) {
       list($module, $id, ) = explode('/', $variables[$menu][$key]['href'] . '//', 3);
       if ($module == 'menu-item-container') {
@@ -138,10 +138,11 @@ function menu_item_container_preprocess_page(&$variables) {
           'menu_item_container__' . str_replace('-', '_', $menu),
           'menu_item_container',
         );
-        $variables[$menu][$key]['title'] = theme($hooks, array(
-          'title' => '<a href="#">' . check_plain($variables[$menu][$key]['title']) . '</a>',
+        $variables[$menu][$key]['title'] = theme($hooks, array('element' => array(
+          '#title' => '<a href="#">' . check_plain($variables[$menu][$key]['title']) . '</a>',
           'localized_options' => array('html' => TRUE),
-        ));
+          'special_menu' => TRUE,
+        )));
         $variables[$menu][$key]['html'] = TRUE;
         // Remove link path so theme_links() will wrap item with a span.
         unset($variables[$menu][$key]['href']);
@@ -188,5 +189,5 @@ function theme_menu_item_container($link) {
     $options['attributes']['title'] = strip_tags($options['attributes']['title']);
   }
 
-  return '<li' . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $element['#title'] : check_plain($element['#title'])) . $sub_menu . '</li>';
+  return '<' . ($element['special_menu'] ? 'span' : 'li') . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $element['#title'] : check_plain($element['#title'])) . $sub_menu . '</' . ($element['special_menu'] ? 'span' : 'li') . '>';
 }

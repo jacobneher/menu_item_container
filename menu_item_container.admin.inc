@@ -57,7 +57,6 @@ function _menu_item_container_form_menu_overview_form_alter(&$form, &$form_state
         $form[$key]['expanded']['#disabled'] = TRUE;
         // Set the proper edit operations link.
         $form[$key]['operations']['edit']['#href'] = 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/edit';
-//print '<pre>'; print_r($form[$key]); die('</pre>');
         // Build our own delete link
         $form[$key]['operations']['delete'] = array(
           '#type' => 'link',
@@ -128,6 +127,9 @@ function _menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
     '#type' => 'hidden',
     '#default_value' => $item['link_path'],
   );
+  
+  // Set the default parent menu
+  $form['parent']['#default_value'] = arg(4) . ':0';
 
   // Add a delete button, accessible on "edit" forms.
   $form['actions']['delete'] = array(
