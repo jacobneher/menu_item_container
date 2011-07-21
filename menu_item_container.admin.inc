@@ -51,18 +51,13 @@ function _menu_item_container_form_menu_overview_form_alter(&$form, &$form_state
     if (isset($form[$key]['#item'])) {
       list($module, $id, ) = explode('/', $form[$key]['#item']['link_path'] . '//', 3);
       if ($module == 'menu-item-container') {
-        // Replace the default link with a properly themed container.
-        $hooks = array(
-          'menu_item_container__' . $id,
-          'menu_item_container__' . str_replace('-', '_', $form[$key]['#item']['menu_name']),
-          'menu_item_container',
-        );
-        $form[$key]['title']['#markup'] = theme($hooks, $form[$key]['#item']);
+        $form[$key]['title']['#markup'] = '<span>' . $form[$key]['#item']['link_title'] . '</span>';
         
         // Containers are always expanded.
         $form[$key]['expanded']['#disabled'] = TRUE;
         // Set the proper edit operations link.
         $form[$key]['operations']['edit']['#href'] = 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/edit';
+//print '<pre>'; print_r($form[$key]); die('</pre>');
         // Build our own delete link
         $form[$key]['operations']['delete'] = array(
           '#type' => 'link',

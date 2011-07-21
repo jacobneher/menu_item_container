@@ -61,9 +61,9 @@ function menu_item_container_theme() {
  */
 function menu_item_container_theme_registry_alter(&$theme_registry) {
   // Route theme_menu_item_link().
-  $function = $theme_registry['menu_item_link']['function'];
-  $theme_registry['menu_item_link']['function'] = 'menu_item_container_route_menu_item';
-  $theme_registry['menu_item_link']['function_menu_item_container'] = $function;
+  $function = $theme_registry['menu_link']['function'];
+  $theme_registry['menu_link']['function'] = 'menu_item_container_route_menu_item';
+  $theme_registry['menu_link']['function_menu_item_container'] = $function;
   // Route theme_breadcrumb().
   $function = $theme_registry['breadcrumb']['function'];
   $theme_registry['breadcrumb']['function'] = 'menu_item_container_clean_breadcrumb';
@@ -75,7 +75,7 @@ function menu_item_container_theme_registry_alter(&$theme_registry) {
  */
 function menu_item_container_route_menu_item($link) {
   // If this menu item is a container, theme it.
-  list($module, $id, ) = explode('/', $link['href'] . '//', 3);
+  list($module, $id, ) = explode('/', $link['element']['#href'] . '//', 3);
   if ($module == 'menu-item-container') {
     $hooks = array(
       'menu_item_container__' . $id,
@@ -89,7 +89,7 @@ function menu_item_container_route_menu_item($link) {
     // Use the original theme function before we overrode it.
     // See menu_item_container_theme_registry_alter().
     $theme_registry =& theme_get_registry();
-    $function = $theme_registry['menu_item_link']['function_menu_item_container'];
+    $function = $theme_registry['menu_link']['function_menu_item_container'];
     return $function($link);
   }
 }
@@ -156,7 +156,8 @@ function menu_item_container_preprocess_page(&$variables) {
  * @ingroup themeable
  */
 function theme_menu_item_container($link) {
-  $options = !empty($link['localized_options']) ? $link['localized_options'] : array();
+  $element = $link['element'];
+  $options = !empty($element['localized_options']) ? $element['localized_options'] : array();
 
   // Copied from l() and modified.
 
@@ -168,14 +169,18 @@ function theme_menu_item_container($link) {
   
   // Append menu-item-container class.
   if (isset($options['attributes']['class'])) {
-    $options['attributes']['class'] .= ' menu-item-container';
+    $options['attributes']['class'] .= ' menu-item-container expanded';
   }
   else {
-    $options['attributes']['class'] = 'menu-item-container';
+    $options['attributes']['class'] = 'menu-item-container expanded';
   }
 
   // Make the container navigable with tabindex="0".
   $options['attributes']['tabindex'] = '0';
+  
+  if ($element['#below']) {
+    $sub_menu = drupal_render($element['#below']);
+  }
 
   // Remove all HTML and PHP tags from a tooltip. For best performance, we act only
   // if a quick strpos() pre-check gave a suspicion (because strip_tags() is expensive).
@@ -183,5 +188,5 @@ function theme_menu_item_container($link) {
     $options['attributes']['title'] = strip_tags($options['attributes']['title']);
   }
 
-  return '<span' . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $link['title'] : check_plain($link['title'])) . '</span>';
+  return '<li' . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $element['#title'] : check_plain($element['#title'])) . $sub_menu . '</li>';
 }
