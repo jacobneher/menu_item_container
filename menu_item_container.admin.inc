@@ -15,7 +15,7 @@ function _menu_item_container_menu() {
     'page callback' => 'menu_item_container',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/structure/menu/manage/%menu/container-add'] = array(
+  $items['admin/structure/menu/manage/%menu/container/add'] = array(
     'title' => 'Add container',
     'page callback' => 'menu_item_container_edit',
     'page arguments' => array('add', NULL, 3),
@@ -23,7 +23,7 @@ function _menu_item_container_menu() {
     'type' => MENU_LOCAL_ACTION,
     'file' => 'menu_item_container.admin.inc',
   );
-  $items['admin/structure/menu/item/%menu_link/container-edit'] = array(
+  $items['admin/structure/menu/item/%menu_link/container/edit'] = array(
     'title' => 'Edit menu container',
     'page callback' => 'menu_item_container_edit',
     'page arguments' => array('edit', 4, NULL),
@@ -31,7 +31,7 @@ function _menu_item_container_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'menu_item_container.admin.inc',
   );
-  $items['admin/structure/menu/item/%menu_link/container-delete'] = array(
+  $items['admin/structure/menu/item/%menu_link/container/delete'] = array(
     'title' => 'Delete menu container',
     'page callback' => 'menu_item_container_delete_page',
     'page arguments' => array(4),
@@ -57,12 +57,13 @@ function _menu_item_container_form_menu_overview_form_alter(&$form, &$form_state
           'menu_item_container__' . str_replace('-', '_', $form[$key]['#item']['menu_name']),
           'menu_item_container',
         );
-        $form[$key]['title']['#value'] = theme($hooks, $form[$key]['#item']);
+        $form[$key]['title']['#markup'] = theme($hooks, $form[$key]['#item']);
+        
         // Containers are always expanded.
         $form[$key]['expanded']['#disabled'] = TRUE;
         // Set the proper operations links.
-        $form[$key]['operations']['edit']['#value'] = l('edit', 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container-edit');
-        $form[$key]['operations']['delete']['#value'] = l('delete', 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container-delete');
+        $form[$key]['operations']['edit']['#href'] = 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/edit';
+//        $form[$key]['operations']['delete']['#value'] = l('delete', 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/delete');
       }
     }
   }
@@ -82,67 +83,69 @@ function menu_item_container_edit($type, $item, $menu) {
  * Implements hook_form_FORM_ID_alter().
  */
 function _menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
-  // Get the paramters of menu_edit_item().
-  list(,, $type, $item, $menu) = $form['#parameters'];
-
   // We only need to alter the forms for menu item containers.
-  if (!isset($form['#parameters'][5]) || $form['#parameters'][5] != 'menu_item_container_edit' || isset($item['module']) && $item['module'] != 'menu_item_container') {
+  if (arg(5) != 'container' && $form['module']['#value'] != 'menu_item_container') {
     return;
   }
+  
+  // Get the paramters of menu_edit_item().
+  $type = arg(6);
+  $item = $form['original_item']['#value'];
 
   if ($type == 'add') {
     // Find the next possible container ID so each path is unique.
-    $result = db_query('SELECT link_path FROM {menu_links} WHERE module = "menu_item_container"');
+    $result = db_select('menu_links', 'ml')
+                ->fields('ml', array('link_path'))
+                ->condition('module', 'menu_item_container')
+                ->execute();
     $new_id = 1;
-    while ($row = db_fetch_array($result)) {
+    while ($row = $result->fetchAssoc()) {
       $id = str_replace('menu-item-container/', '', $row['link_path']);
       if ($id >= $new_id) {
         $new_id = $id + 1;
       }
     }
     // This is an add form, initialize the menu item.
-    $item = $form['menu']['original_item']['#value'];
+    $item = $form['original_item']['#value'];
     $item['link_path'] = 'menu-item-container/' . $new_id;
     $item['module'] = 'menu_item_container';
     $item['expanded'] = 1;
     foreach (array('link_path', 'module') as $key) {
-      $form['menu'][$key] = array('#type' => 'value', '#value' => $item[$key]);
+      $form[$key] = array('#type' => 'value', '#value' => $item[$key]);
     }
-    $form['menu']['original_item'] = array('#type' => 'value', '#value' => $item);
+    $form['original_item'] = array('#type' => 'value', '#value' => $item);
   }
   // Don't edit standard menu items.
   elseif ($item['module'] != 'menu_item_container') {
     return;
   }
-
-  // Add an additional class to the fieldset.
-  $form['menu']['#attributes']['class'] .= ' menu-item-container-form';
+  // Add an additional class to the form.
+  $form['#attributes']['class'] .= ' menu-item-container-form';
 
   // Update the link_path item.
-  unset($form['menu']['_path']);
-  $form['menu']['link_path'] = array(
+  unset($form['_path']);
+  $form['link_path'] = array(
     '#type' => 'hidden',
     '#default_value' => $item['link_path'],
   );
 
   // Add a delete button, accessible on "edit" forms.
-  $form['delete'] = array(
+  $form['actions']['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
     '#access' => $item['mlid'],
     '#submit' => array('menu_item_container_delete_submit'),
-    '#weight' => 10,
   );
 
-  $form['menu']['link_title']['#title'] = t('Menu container title');
-  $form['menu']['link_title']['#description'] = t('The text corresponding to this container that should appear in the menu.');
+  $form['link_title']['#title'] = t('Menu container title');
+  $form['link_title']['#description'] = t('The text corresponding to this container that should appear in the menu.');
 
-  $form['menu']['description']['#description'] = t('The description displayed when hovering over a menu container.');
+  $form['description']['#description'] = t('The description displayed when hovering over a menu container.');
 
-  $form['menu']['enabled']['#description'] = t('Menu containers that are not enabled will not be listed in any menu.');
+  $form['enabled']['#description'] = t('Menu containers that are not enabled will not be listed in any menu.');
 
-  $form['menu']['expanded']['#type'] = 'hidden';
-  $form['menu']['expanded']['#default_value'] = 1;
+  $form['expanded']['#type'] = 'hidden';
+  $form['expanded']['#default_value'] = 1;
 
   // Override validate and submit handlers.
   $key = array_search('menu_edit_item_validate', $form['#validate']);
@@ -157,7 +160,7 @@ function _menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
  * Process menu and menu item add/edit form submissions.
  */
 function menu_item_container_edit_submit($form, &$form_state) {
-  $item = &$form_state['values']['menu'];
+  $item = &$form_state['values'];
 
   // The value of "hidden" is the opposite of the value
   // supplied by the "enabled" checkbox.
@@ -190,14 +193,15 @@ function menu_item_container_delete_page($item) {
  */
 function menu_item_container_delete_form(&$form_state, $item) {
   $form['#item'] = $item;
-  return confirm_form($form, t('Are you sure you want to delete the menu container %item?', array('%item' => $item['link_title'])), 'admin/structure/menu/manage/' . $item['menu_name']);
+  $info = $item['build_info']['args'][0];
+  return confirm_form($form, t('Are you sure you want to delete the menu container %item?', array('%item' => $info['link_title'])), 'admin/structure/menu/manage/' . $info['menu_name']);
 }
 
 /**
  * Process menu delete form submissions.
  */
 function menu_item_container_delete_form_submit($form, &$form_state) {
-  $item = $form['#item'];
+  $item = $form['#item']['build_info']['args'][0];
   menu_link_delete($item['mlid']);
   $t_args = array('%title' => $item['link_title']);
   drupal_set_message(t('The menu container %title has been deleted.', $t_args));
@@ -209,5 +213,5 @@ function menu_item_container_delete_form_submit($form, &$form_state) {
  * Submit function for the delete button on the menu container editing form.
  */
 function menu_item_container_delete_submit($form, &$form_state) {
-  $form_state['redirect'] = 'admin/structure/menu/item/' . $form_state['values']['menu']['mlid'] . '/container-delete';
+  $form_state['redirect'] = 'admin/structure/menu/item/' . $form_state['values']['mlid'] . '/container/delete';
 }

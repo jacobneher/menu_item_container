@@ -165,7 +165,7 @@ function theme_menu_item_container($link) {
     'attributes' => array(),
     'html' => FALSE,
   );
-
+  
   // Append menu-item-container class.
   if (isset($options['attributes']['class'])) {
     $options['attributes']['class'] .= ' menu-item-container';
