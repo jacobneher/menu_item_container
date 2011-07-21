@@ -69,6 +69,11 @@ function _menu_item_container_form_menu_overview_form_alter(&$form, &$form_state
           '#title' => t('delete'),
           '#href' => 'admin/structure/menu/item/' . $form[$key]['#item']['mlid'] . '/container/delete',
         );
+        // Display information about how to theme this menu's containers
+        $form['menu_item_container_info'] = array(
+          '#markup' => t('To override the theme for this menu\'s containers use <code>') . variable_get('theme_default', 'bartik') . '_menu_item_container__' . arg(4) . '()</code> in template.php',
+          '#weight' => -100,
+        );
       }
     }
   }
@@ -96,7 +101,7 @@ function _menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
   // Get the paramters of menu_edit_item().
   $type = arg(6);
   $item = $form['original_item']['#value'];
-
+  
   if ($type == 'add') {
     // Find the next possible container ID so each path is unique.
     $result = db_select('menu_links', 'ml')
@@ -140,6 +145,13 @@ function _menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
     '#value' => t('Delete'),
     '#access' => $item['mlid'],
     '#submit' => array('menu_item_container_delete_submit'),
+  );
+
+  // Display information about how to theme this link
+  list($module, $id) = explode('/', $form['link_path']['#default_value']);
+  $form['menu_item_container_id'] = array(
+    '#markup' => t('To override the theme for this container use <code>') . variable_get('theme_default', 'bartik') . "_menu_item_container__$id()</code> in template.php",
+    '#weight' => -100,
   );
 
   $form['link_title']['#title'] = t('Menu container title');
