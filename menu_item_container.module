@@ -36,12 +36,16 @@ function menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
   _menu_item_container_form_menu_edit_item_alter($form, $form_state);
 }
 
-if (module_exists('nice_menus')) {
-  /**
-   * Implements hook_init().
-   */
-  function menu_item_container_init() {
+/**
+ * Implements hook_init().
+ */
+function menu_item_container_init() {
+  if (module_exists('nice_menus')) {
     drupal_add_css(drupal_get_path('module', 'menu_item_container') . '/css/menu-item-container-nice-menus.css');
+  }
+  
+  if (module_exists('superfish')) {
+    drupal_add_js(drupal_get_path('module', 'menu_item_container') . '/js/menu_item_container.js');
   }
 }
 
@@ -64,10 +68,12 @@ function menu_item_container_theme_registry_alter(&$theme_registry) {
   $function = $theme_registry['menu_link']['function'];
   $theme_registry['menu_link']['function'] = 'menu_item_container_route_menu_item';
   $theme_registry['menu_link']['function_menu_item_container'] = $function;
+  
   // Route theme_breadcrumb().
-  $function = $theme_registry['breadcrumb']['function'];
+/*  $function = $theme_registry['breadcrumb']['function'];
   $theme_registry['breadcrumb']['function'] = 'menu_item_container_clean_breadcrumb';
   $theme_registry['breadcrumb']['function_menu_item_container'] = $function;
+*/
 }
 
 /**
@@ -91,6 +97,35 @@ function menu_item_container_route_menu_item($link) {
     $theme_registry =& theme_get_registry();
     $function = $theme_registry['menu_link']['function_menu_item_container'];
     return $function($link);
+  }
+}
+
+function menu_item_container_preprocess_superfish_build(&$vars) {
+  foreach ($vars['menu'] as $key => $menu_item) {
+    list($module, $id, ) = explode('/', $menu_item['link']['href'] . '//', 3);
+    if ($module == 'menu-item-container') {
+      // We set a class on the link so that we can apply css styling to it
+      // and so that we can key off that class in the javascript file.
+      $vars['menu'][$key]['link']['localized_options']['attributes']['class'][] = 'menu-item-container';
+      // We set the link_path to empty so that just the home page is displayed
+      // as the href and not an odd menu_item_container/[id] link.
+      $vars['menu'][$key]['link']['link_path'] = '';
+    }
+    
+    // If there are sub-menu items, we need to check them as well...
+    if (!empty($menu_item['below'])) {
+      foreach ($menu_item['below'] as $sub_key => $sub_menu_item) {
+        list($module, $id, ) = explode('/', $menu_item['link']['href'] . '//', 3);
+        if ($module == 'menu-item-container') {
+          // We set a class on the link so that we can apply css styling to it
+          // and so that we can key off that class in the javascript file.
+          $vars['menu'][$key]['below'][$sub_key]['link']['localized_options']['attributes']['class'][] = 'menu-item-container';
+          // We set the link_path to empty so that just the home page is displayed
+          // as the href and not an odd menu_item_container/[id] link.
+          $vars['menu'][$key]['below'][$sub_key]['link']['link_path'] = '';
+        }
+      }
+    }
   }
 }
 
