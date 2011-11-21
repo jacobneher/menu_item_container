@@ -100,35 +100,6 @@ function menu_item_container_route_menu_item($link) {
   }
 }
 
-function menu_item_container_preprocess_superfish_build(&$vars) {
-  foreach ($vars['menu'] as $key => $menu_item) {
-    list($module, $id, ) = explode('/', $menu_item['link']['href'] . '//', 3);
-    if ($module == 'menu-item-container') {
-      // We set a class on the link so that we can apply css styling to it
-      // and so that we can key off that class in the javascript file.
-      $vars['menu'][$key]['link']['localized_options']['attributes']['class'][] = 'menu-item-container';
-      // We set the link_path to empty so that just the home page is displayed
-      // as the href and not an odd menu_item_container/[id] link.
-      $vars['menu'][$key]['link']['link_path'] = '';
-    }
-    
-    // If there are sub-menu items, we need to check them as well...
-    if (!empty($menu_item['below'])) {
-      foreach ($menu_item['below'] as $sub_key => $sub_menu_item) {
-        list($module, $id, ) = explode('/', $menu_item['link']['href'] . '//', 3);
-        if ($module == 'menu-item-container') {
-          // We set a class on the link so that we can apply css styling to it
-          // and so that we can key off that class in the javascript file.
-          $vars['menu'][$key]['below'][$sub_key]['link']['localized_options']['attributes']['class'][] = 'menu-item-container';
-          // We set the link_path to empty so that just the home page is displayed
-          // as the href and not an odd menu_item_container/[id] link.
-          $vars['menu'][$key]['below'][$sub_key]['link']['link_path'] = '';
-        }
-      }
-    }
-  }
-}
-
 /**
  * Cleans menu item containers in the breadcrumb.
  */
@@ -181,6 +152,35 @@ function menu_item_container_preprocess_page(&$variables) {
         $variables[$menu][$key]['html'] = TRUE;
         // Remove link path so theme_links() will wrap item with a span.
         unset($variables[$menu][$key]['href']);
+      }
+    }
+  }
+}
+
+function menu_item_container_preprocess_superfish_build(&$vars) {
+  foreach ($vars['menu'] as $key => $menu_item) {
+    list($module, $id, ) = explode('/', $menu_item['link']['href'] . '//', 3);
+    if ($module == 'menu-item-container') {
+      // We set a class on the link so that we can apply css styling to it
+      // and so that we can key off that class in the javascript file.
+      $vars['menu'][$key]['link']['localized_options']['attributes']['class'][] = 'menu-item-container';
+      // We set the link_path to empty so that just the home page is displayed
+      // as the href and not an odd menu_item_container/[id] link.
+      $vars['menu'][$key]['link']['link_path'] = '';
+    }
+    
+    // If there are sub-menu items, we need to check them as well...
+    if (!empty($menu_item['below'])) {
+      foreach ($menu_item['below'] as $sub_key => $sub_menu_item) {
+        list($module, $id, ) = explode('/', $sub_menu_item['link']['href'] . '//', 3);
+        if ($module == 'menu-item-container') {
+          // We set a class on the link so that we can apply css styling to it
+          // and so that we can key off that class in the javascript file.
+          $vars['menu'][$key]['below'][$sub_key]['link']['localized_options']['attributes']['class'][] = 'menu-item-container';
+          // We set the link_path to empty so that just the home page is displayed
+          // as the href and not an odd menu_item_container/[id] link.
+          $vars['menu'][$key]['below'][$sub_key]['link']['link_path'] = '';
+        }
       }
     }
   }
