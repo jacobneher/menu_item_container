@@ -1,0 +1,5 @@
+/* Add to Superfish styling */
+
+ul.sf-menu a.menu-item-container {
+  cursor: default;
+}

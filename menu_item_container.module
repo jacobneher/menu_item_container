@@ -41,10 +41,11 @@ function menu_item_container_form_menu_edit_item_alter(&$form, &$form_state) {
  */
 function menu_item_container_init() {
   if (module_exists('nice_menus')) {
-    drupal_add_css(drupal_get_path('module', 'menu_item_container') . '/css/menu-item-container-nice-menus.css');
+    drupal_add_css(drupal_get_path('module', 'menu_item_container') . '/css/menu_item_container_nice_menus.css');
   }
   
   if (module_exists('superfish')) {
+    drupal_add_css(drupal_get_path('module', 'menu_item_container') . '/css/menu_item_container_superfish.css');
     drupal_add_js(drupal_get_path('module', 'menu_item_container') . '/js/menu_item_container.js');
   }
 }
