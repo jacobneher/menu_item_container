@@ -193,6 +193,8 @@ function menu_item_container_preprocess_superfish_build(&$vars) {
  * @ingroup themeable
  */
 function theme_menu_item_container($link) {
+  $sub_menu = '';
+  $tag = 'li';
   $element = $link['element'];
   $options = !empty($element['localized_options']) ? $element['localized_options'] : array();
 
@@ -215,7 +217,7 @@ function theme_menu_item_container($link) {
   // Make the container navigable with tabindex="0".
   $options['attributes']['tabindex'] = '0';
   
-  if ($element['#below']) {
+  if (!empty($element['#below'])) {
     $sub_menu = drupal_render($element['#below']);
   }
 
@@ -224,6 +226,10 @@ function theme_menu_item_container($link) {
   if (isset($options['attributes']['title']) && strpos($options['attributes']['title'], '<') !== FALSE) {
     $options['attributes']['title'] = strip_tags($options['attributes']['title']);
   }
-
-  return '<' . ($element['special_menu'] ? 'span' : 'li') . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $element['#title'] : check_plain($element['#title'])) . $sub_menu . '</' . ($element['special_menu'] ? 'span' : 'li') . '>';
+  
+  if (!empty($element['special_menu'])) {
+    $tag = 'span';
+  }
+  
+  return '<' . $tag . drupal_attributes($options['attributes']) . '>' . (!empty($options['html']) ? $element['#title'] : check_plain($element['#title'])) . $sub_menu . '</' . $tag . '>';
 }
